@@ -1,13 +1,10 @@
-
 const axios = require("axios");
 const Slimbot = require("slimbot");
 const isImageUrl = require("is-image-url");
 
-const GIST_SHORT_IDS = process.env.GIST_SHORT_IDS_STR.split(",");
 const GITHUB_PAT = process.env.GIST_PAT;
 const BOT_TOKEN = process.env.BOT_TOKEN;
-
-const TELEGRAM_CHAT_ID = -1001249449971;
+const TELEGRAM_CHAT_ID = -1003584652910;
 const Login = "zsxcoder";
 const REPO = "weibo";
 
@@ -95,32 +92,6 @@ async function getLatestIssues(owner, repo, count = 6) {
   }
 }
 
-async function updateGistContent(gistId, content, description) {
-  try {
-    const files = {
-      "content.md": {
-        content: content,
-      },
-    };
-
-    console.log(`Updating Gist ${gistId} with new content...`);
-    const response = await github.patch(`/gists/${gistId}`, {
-      description: description,
-      files: files,
-    });
-
-    console.log(`Gist ${gistId} updated successfully.`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating Gist ${gistId}:`, error.message);
-    if (error.response) {
-      console.error(`Status: ${error.response.status}`);
-      console.error(`Response data:`, error.response.data);
-    }
-    return null;
-  }
-}
-
 function formatIssueContent(issue) {
   const labelsText =
     issue.labels.length > 0 ? `Labels: ${issue.labels.join(", ")}\n\n` : "";
@@ -128,7 +99,7 @@ function formatIssueContent(issue) {
   return `${issue.body}
 
 ---
-${labelsText}Original post: https://simonaking.com/blog/weibo`;
+${labelsText}Original post: https://gwitter.zsxcoder.top `;
 }
 
 function formatIssueTitle(issue) {
@@ -150,7 +121,6 @@ async function sendToTelegram(issue) {
     console.log("Sending issue to Telegram group...");
 
     const formattedContent = formatIssueContent(issue);
-
     const telegramMessage = `*${issue.title}*\n\n${formattedContent}`;
 
     const config = {
@@ -191,6 +161,11 @@ async function main() {
     return;
   }
 
+  if (!BOT_TOKEN) {
+    console.error("ERROR: BOT_TOKEN environment variable is not set.");
+    return;
+  }
+
   try {
     const issues = await getLatestIssues(Login, REPO);
     if (issues.length === 0) {
@@ -200,33 +175,6 @@ async function main() {
 
     if (issues.length > 0) {
       await sendToTelegram(issues[0]);
-    }
-
-    const activeGistIds = GIST_SHORT_IDS.filter(
-      (id) => id && !id.startsWith("YOUR_GIST_ID")
-    );
-    if (activeGistIds.length === 0) {
-      console.error(
-        "No valid Gist IDs provided. Update the GIST_SHORT_IDS array with your Gist IDs. Exiting."
-      );
-      return;
-    }
-
-    console.log(
-      `Updating ${Math.min(
-        issues.length,
-        activeGistIds.length
-      )} Gists with issue content...`
-    );
-
-    for (let i = 0; i < Math.min(issues.length, activeGistIds.length); i++) {
-      const issue = issues[i];
-      const gistId = activeGistIds[i];
-
-      const formattedContent = formatIssueContent(issue);
-      const formattedTitle = formatIssueTitle(issue);
-
-      await updateGistContent(gistId, formattedContent, formattedTitle);
     }
   } catch (error) {
     console.error("Error in main execution:", error);
