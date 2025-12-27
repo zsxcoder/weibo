@@ -1,19 +1,15 @@
-
 {
   "name": "weibo-sync",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sync GitHub issues to Telegram",
+  "main": "sync.js",
   "scripts": {
-    "start": "echo HelloWorld"
+    "start": "node sync.js"
   },
-  "keywords": [],
+  "keywords": ["github", "telegram", "sync"],
   "author": "SimonMa",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.2",
-    "cross-env": "^7.0.0",
-    "is-image-url": "^1.1.8",
-    "slimbot": "^4.6.0"
+    "axios": "^1.7.0"
   }
 }
