@@ -13,20 +13,20 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4  # 使用稳定版本标签而不是 master
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4  # 使用稳定版本
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: 'npm'  # 启用 npm 缓存，加快构建速度
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci  # 使用 npm ci 而不是 npm install，更适合 CI 环境
+        run: npm ci
 
       - name: Sync Weibo
         env:
           GIST_PAT: ${{ secrets.GIST_PAT }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          GIST_SHORT_IDS_STR: ${{ secrets secrets.GIST_SHORT_IDS_STR }}
-        run: node sync.js  # 直接运行，不需要 cross-env
+          GIST_SHORT_IDS_STR: ${{ secrets.GIST_SHORT_IDS_STR }}  # ✅ 修正这里
+        run: node sync.js
