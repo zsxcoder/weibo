@@ -28,5 +28,4 @@ jobs:
         env:
           GIST_PAT: ${{ secrets.GIST_PAT }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          GIST_SHORT_IDS_STR: ${{ secrets.GIST_SHORT_IDS_STR }}  # ✅ 修正这里
         run: node sync.js
