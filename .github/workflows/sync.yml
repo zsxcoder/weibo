@@ -5,30 +5,28 @@ on:
     branches:
       - main
   issues:
-    types: [ opened , edited ]
+    types: [opened, edited]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository master branch
-      uses: actions/checkout@master
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # 使用稳定版本标签而不是 master
 
-    - name: Setup Node.js
-      uses: actions/setup-node@master
-      with:
-        node-version: "22"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4  # 使用稳定版本
+        with:
+          node-version: "22"
+          cache: 'npm'  # 启用 npm 缓存，加快构建速度
 
-    - name: Setup Dependencies
-      run: |
-        npm install cross-env -g
-        npm install
+      - name: Install Dependencies
+        run: npm ci  # 使用 npm ci 而不是 npm install，更适合 CI 环境
 
-    - name: Sync Weibo
-      env:
-        GIST_PAT: ${{ secrets.GIST_PAT }}
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        GIST_SHORT_IDS_STR: ${{ secrets.GIST_SHORT_IDS_STR }}
-      run: |
-        cross-env GIST_PAT=$GIST_PAT BOT_TOKEN=$BOT_TOKEN GIST_SHORT_IDS_STR=$GIST_SHORT_IDS_STR node sync.js
+      - name: Sync Weibo
+        env:
+          GIST_PAT: ${{ secrets.GIST_PAT }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GIST_SHORT_IDS_STR: ${{ secrets secrets.GIST_SHORT_IDS_STR }}
+        run: node sync.js  # 直接运行，不需要 cross-env
