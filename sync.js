@@ -1,6 +1,4 @@
 const axios = require("axios");
-const Slimbot = require("slimbot");
-const isImageUrl = require("is-image-url");
 
 const GITHUB_PAT = process.env.GIST_PAT;
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -8,6 +6,7 @@ const TELEGRAM_CHAT_ID = -1003584652910;
 const Login = "zsxcoder";
 const REPO = "weibo";
 
+// GitHub API 客户端
 const github = axios.create({
   baseURL: "https://api.github.com/",
   headers: {
@@ -16,7 +15,33 @@ const github = axios.create({
   },
 });
 
-const slimbot = new Slimbot(BOT_TOKEN);
+// Telegram Bot API 客户端（替代 slimbot）
+const telegram = {
+  sendMessage: async (chatId, text, config = {}) => {
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    return axios.post(url, {
+      chat_id: chatId,
+      text,
+      ...config,
+    });
+  },
+  
+  sendPhoto: async (chatId, photo) => {
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
+    return axios.post(url, {
+      chat_id: chatId,
+      photo,
+    });
+  },
+};
+
+// 简单验证图片URL（替代 is-image-url）
+function isImageUrl(url) {
+  if (!url) return false;
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+  const parsedUrl = url.toLowerCase().split('?')[0]; // 移除查询参数
+  return imageExtensions.some(ext => parsedUrl.endsWith(ext));
+}
 
 async function fetchGraphQL(query, variables = {}) {
   if (!GITHUB_PAT) {
@@ -99,7 +124,7 @@ function formatIssueContent(issue) {
   return `${issue.body}
 
 ---
-${labelsText}Original post: https://gwitter.zsxcoder.top `;
+${labelsText}Original post: https://gwitter.zsxcoder.top  `;
 }
 
 function formatIssueTitle(issue) {
@@ -112,7 +137,7 @@ function formatIssueTitle(issue) {
 }
 
 async function sendToTelegram(issue) {
-  if (!BOT_TOKEN || !slimbot) {
+  if (!BOT_TOKEN) {
     console.log("Telegram bot token not set, skipping Telegram notification");
     return;
   }
@@ -129,7 +154,7 @@ async function sendToTelegram(issue) {
       disable_notification: false,
     };
 
-    await slimbot.sendMessage(TELEGRAM_CHAT_ID, telegramMessage, config);
+    await telegram.sendMessage(TELEGRAM_CHAT_ID, telegramMessage, config);
 
     const imageRegex = /(?:!\[(.*?)\]\((.*?)\))/g;
     const images = issue.body.match(imageRegex);
@@ -142,7 +167,7 @@ async function sendToTelegram(issue) {
       for (const image of images) {
         const url = image.slice(image.indexOf("(") + 1, -1);
         if (isImageUrl(url)) {
-          await slimbot.sendPhoto(TELEGRAM_CHAT_ID, url);
+          await telegram.sendPhoto(TELEGRAM_CHAT_ID, url);
         }
       }
     }
@@ -151,6 +176,9 @@ async function sendToTelegram(issue) {
     return true;
   } catch (error) {
     console.error("Error sending to Telegram:", error.message);
+    if (error.response) {
+      console.error("Telegram API response:", error.response.data);
+    }
     return false;
   }
 }
